@@ -19,12 +19,10 @@ Demo project is [here](./Sample).
 
 1. Run `npm install https://github.com/Jelly0726/react-native-viewpager.git --save`
 2. Code like this:
-import ViewPager from 'react-native-viewpager';  
 ```
+import ViewPager from 'react-native-viewpager'; 
 or
 var ViewPager = require('react-native-viewpager');
-
-```
 <ViewPager
     dataSource={this.state.dataSource}
     renderPage={this._renderPage}/>
