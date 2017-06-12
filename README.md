@@ -17,7 +17,7 @@ Demo project is [here](./Sample).
 
 ## Usage
 
-1. Run `npm install react-native-viewpager --save`
+1. Run `npm install https://github.com/Jelly0726/react-native-viewpager.git --save`
 2. Code like this:
 
 ```
