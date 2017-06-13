@@ -80,7 +80,8 @@ var ViewPager = React.createClass({
             //console.log('relativeGestureDistance()='+relativeGestureDistance);
             //判断移动的距离==0时为点击事件
             if(relativeGestureDistance==0){
-                this.props.onSelectPage &&  this.props.onSelectPage(this.state.currentPage);
+                var dataSource=this.props.dataSource;
+                this.props.onSelectPage &&  this.props.onSelectPage(this.state.currentPage,dataSource);
                 return;
             }
             var step = 0;
