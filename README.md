@@ -37,6 +37,7 @@ var ViewPager = require('react-native-viewpager');
 * **`isLoop`**: `true` to run in infinite scroll mode,
 * **`locked`**: `true` to disable touch scroll,
 * **`onChangePage`**: page change callback,
+* **`onSelectPage`**: page Select callback,
 * **`renderPageIndicator`**: render custom ViewPager indicator.
 * **`initialPage`**: show initially some other page than first page.
 
