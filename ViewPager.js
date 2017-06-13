@@ -33,6 +33,7 @@ var ViewPager = React.createClass({
     dataSource: PropTypes.instanceOf(ViewPagerDataSource).isRequired,
     renderPage: PropTypes.func.isRequired,
     onChangePage: PropTypes.func,
+    onSelectPage: PropTypes.func,
     renderPageIndicator: PropTypes.oneOfType([
       PropTypes.func,
       PropTypes.bool
@@ -69,50 +70,74 @@ var ViewPager = React.createClass({
     };
   },
 
-  componentWillMount() {
-    this.childIndex = 0;
+   componentWillMount() {
+        this.childIndex = 0;
 
-    var release = (e, gestureState) => {
-      var relativeGestureDistance = gestureState.dx / deviceWidth,
-          //lastPageIndex = this.props.children.length - 1,
-          vx = gestureState.vx;
+        var release = (e, gestureState) => {
+            var relativeGestureDistance = gestureState.dx / deviceWidth,
+                //lastPageIndex = this.props.children.length - 1,
+                vx = gestureState.vx;
+            //console.log('relativeGestureDistance()='+relativeGestureDistance);
+            //判断移动的距离==0时为点击事件
+            if(relativeGestureDistance==0){
+                this.props.onSelectPage &&  this.props.onSelectPage(this.state.currentPage);
+                return;
+            }
+            var step = 0;
+            if (relativeGestureDistance < -0.5 || (relativeGestureDistance < 0 && vx <= -1e-6)) {
+                step = 1;
+            } else if (relativeGestureDistance > 0.5 || (relativeGestureDistance > 0 && vx >= 1e-6)) {
+                step = -1;
+            }
 
-      var step = 0;
-      if (relativeGestureDistance < -0.5 || (relativeGestureDistance < 0 && vx <= -1e-6)) {
-        step = 1;
-      } else if (relativeGestureDistance > 0.5 || (relativeGestureDistance > 0 && vx >= 1e-6)) {
-        step = -1;
-      }
+            this.props.hasTouch && this.props.hasTouch(false);
 
-      this.props.hasTouch && this.props.hasTouch(false);
-
-      this.movePage(step, gestureState);
-    }
-
-    this._panResponder = PanResponder.create({
-      // Claim responder if it's a horizontal pan
-      onMoveShouldSetPanResponder: (e, gestureState) => {
-        if (Math.abs(gestureState.dx) > Math.abs(gestureState.dy)) {
-          if (/* (gestureState.moveX <= this.props.edgeHitWidth ||
-              gestureState.moveX >= deviceWidth - this.props.edgeHitWidth) && */
-                this.props.locked !== true && !this.fling) {
-            this.props.hasTouch && this.props.hasTouch(true);
-            return true;
-          }
+            this.movePage(step, gestureState);
         }
-      },
 
-      // Touch is released, scroll to the one that you're closest to
-      onPanResponderRelease: release,
-      onPanResponderTerminate: release,
+        this._panResponder = PanResponder.create({
+            // 要求成为响应者：
+            onStartShouldSetPanResponder: (evt, gestureState) => true,
+            onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
+            onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
+            onPanResponderGrant: (evt, gestureState) => {
+                // 开始手势操作。给用户一些视觉反馈，让他们知道发生了什么事情！
+                // gestureState.{x,y}0 现在会被设置为0
+            },
+            onPanResponderTerminationRequest: (evt, gestureState) => true,
 
-      // Dragging, move the view with the touch
-      onPanResponderMove: (e, gestureState) => {
-        var dx = gestureState.dx;
-        var offsetX = -dx / this.state.viewWidth + this.childIndex;
-        this.state.scrollValue.setValue(offsetX);
-      },
-    });
+            // Claim responder if it's a horizontal pan
+            onMoveShouldSetPanResponder: (e, gestureState) => {
+                if (Math.abs(gestureState.dx) > Math.abs(gestureState.dy)) {
+                    if (/* (gestureState.moveX <= this.props.edgeHitWidth ||
+                         gestureState.moveX >= deviceWidth - this.props.edgeHitWidth) && */
+                    this.props.locked !== true && !this.fling) {
+                        this.props.hasTouch && this.props.hasTouch(true);
+                        return true;
+                    }
+                }
+            },
+
+            // Touch is released, scroll to the one that you're closest to
+            // 用户放开了所有的触摸点，且此时视图已经成为了响应者。
+            // 一般来说这意味着一个手势操作已经成功完成。
+            onPanResponderRelease: release,
+            // 另一个组件已经成为了新的响应者，所以当前手势将被取消。
+            onPanResponderTerminate: release,
+            // Dragging, move the view with the touch
+            // 最近一次的移动距离为gestureState.move{X,Y}
+            // 从成为响应者开始时的累计手势移动距离为gestureState.d{x,y}
+            onPanResponderMove: (e, gestureState) => {
+                var dx = gestureState.dx;
+                var offsetX = -dx / this.state.viewWidth + this.childIndex;
+                this.state.scrollValue.setValue(offsetX);
+            },
+            onShouldBlockNativeResponder: (evt, gestureState) => {
+                // 返回一个布尔值，决定当前组件是否应该阻止原生组件成为JS响应者
+                // 默认返回true。目前暂时只支持android。
+                return true;
+            },
+        });
 
     if (this.props.isLoop) {
       this.childIndex = 1;
@@ -313,10 +338,10 @@ var ViewPager = React.createClass({
               viewWidth: viewWidth,
             });
           }}
-        >
+       {...this._panResponder.panHandlers} >
 
         <Animated.View style={[sceneContainerStyle, {transform: [{translateX}]}]}
-          {...this._panResponder.panHandlers}>
+          >
           {bodyComponents}
         </Animated.View>
 
